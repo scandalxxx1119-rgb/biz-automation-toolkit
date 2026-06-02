@@ -1,0 +1,88 @@
+# =====================================================================
+#  業務自動化ツール 設定ファイル
+#  ※ コードを触らず、このファイルだけ書き換えれば挙動が変わります。
+#     案件ごとにこの config.yaml をコピーして使い分けるのが基本です。
+# =====================================================================
+
+# ---------------------------------------------------------------
+#  共通設定
+# ---------------------------------------------------------------
+general:
+  dry_run: false        # true: 実際には書き込まず、ログ出力だけで動作確認
+  copy_mode: true       # true: 元ファイルを残してコピー / false: 移動(元を削除)
+  log_dir: logs         # ログの保存先フォルダ
+  log_level: INFO       # DEBUG / INFO / WARNING / ERROR
+
+# ---------------------------------------------------------------
+#  ① ファイル整理（リネーム & 振り分け）
+# ---------------------------------------------------------------
+file_organizer:
+  enabled: true
+  input_dir: samples/input/files      # 処理対象フォルダ
+  output_dir: samples/output/files    # 出力先フォルダ（この下に振り分けフォルダが作られる）
+
+  # --- リネーム規則 ---
+  rename:
+    enabled: true
+    prefix: "doc"           # 先頭に付ける文字（不要なら "")
+    suffix: ""              # 拡張子の前に付ける文字
+    add_date: true          # 日付を付与する
+    date_format: "%Y%m%d"   # 日付の書式（%Y%m%d -> 20260602）
+    date_position: prefix   # prefix(前) / suffix(後)
+    add_sequence: true      # 連番を付与する
+    sequence_digits: 3      # 連番の桁数（3 -> 001, 002 ...）
+    sequence_start: 1       # 連番の開始番号
+    lowercase_ext: true     # 拡張子を小文字に統一する
+    separator: "_"          # 各要素をつなぐ区切り文字
+
+  # --- 振り分け規則 ---
+  sort:
+    enabled: true
+    # rules は上から順に評価し、最初にマッチしたフォルダへ振り分けます。
+    # match_extensions（拡張子）と match_name_contains（名前に含む文字）が使えます。
+    rules:
+      - name: "画像ファイル"
+        match_extensions: [jpg, jpeg, png, gif, webp, bmp]
+        dest: images
+      # 名前ベースの特定ルールは、拡張子ベースの汎用ルールより前に置く
+      # （上から評価し最初にマッチした先に振り分けるため）
+      - name: "請求書（名前にinvoice/請求を含む）"
+        match_name_contains: ["invoice", "請求"]
+        dest: invoices
+      - name: "ドキュメント"
+        match_extensions: [pdf, docx, doc, xlsx, xls, txt, csv, pptx]
+        dest: documents
+    default_dest: others    # どのルールにもマッチしなかった場合の振り分け先
+
+# ---------------------------------------------------------------
+#  ② 画像一括加工（リサイズ / 透かし / 形式変換）
+# ---------------------------------------------------------------
+image_processor:
+  enabled: true
+  input_dir: samples/input/images     # 加工対象の画像フォルダ
+  output_dir: samples/output/images   # 加工後の保存先
+
+  # --- リサイズ ---
+  resize:
+    enabled: true
+    mode: keep_aspect       # keep_aspect(比率維持) / exact(指定サイズに固定) / by_ratio(倍率)
+    max_width: 1200         # keep_aspect/exact で使う最大幅
+    max_height: 1200        # keep_aspect/exact で使う最大高さ
+    ratio: 0.5              # mode=by_ratio のときの倍率（0.5 = 半分）
+    only_shrink: true       # 元画像より大きくしない（拡大を防ぐ）
+
+  # --- 透かしロゴ挿入 ---
+  watermark:
+    enabled: true
+    logo_path: assets/logo.png   # 透かしに使うロゴ画像（PNG推奨）
+    position: bottom_right       # top_left / top_right / bottom_left / bottom_right / center
+    opacity: 0.5                 # 透明度 0.0(透明)〜1.0(不透明)
+    scale: 0.2                   # 元画像の幅に対するロゴ幅の比率（0.2 = 20%）
+    margin: 20                   # 画像の端からの余白(px)
+
+  # --- 形式変換 & 保存 ---
+  convert:
+    enabled: true
+    to_format: jpg               # jpg / png / webp / keep(元のまま)
+    jpg_quality: 85              # JPEG画質 1〜95
+    filename_suffix: "_processed" # 出力ファイル名の末尾に付ける文字

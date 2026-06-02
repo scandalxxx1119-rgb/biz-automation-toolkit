@@ -1,0 +1,27 @@
+# Python キャッシュ
+__pycache__/
+*.pyc
+*.pyo
+
+# 仮想環境
+.venv/
+venv/
+env/
+
+# ログ・実行結果（環境依存の絶対パスを含むため公開しない）
+logs/
+*.log
+samples/output/
+
+# 認証情報・環境変数（誤コミット防止）
+.env
+.env.*
+*.key
+*.pem
+credentials.json
+secrets.*
+
+# OS依存ファイル
+.DS_Store
+Thumbs.db
+desktop.ini
